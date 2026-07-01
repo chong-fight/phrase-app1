@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>插入同义词测试数据</title></head>
+<body style="font-family:system-ui;padding:20px;background:#f5f5f5;">
+<div style="max-width:500px;margin:40px auto;background:white;padding:32px;border-radius:20px;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
+<h2 id="status">正在插入测试数据...</h2>
+<div id="detail" style="color:#666;font-size:14px;"></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/dexie@4/dist/dexie.js"></script>
+<script>
+const status = document.getElementById('status');
+const detail = document.getElementById('detail');
+
+async function main() {
+  const db = new Dexie("PhraseAppV2");
+  db.version(1).stores({
+    phrases: "++id, phrase, category, starred, createdAt",
+    dailySessions: "++id, date, status",
+    cardProgress: "++id, sessionId, phraseId, status, grade",
+    sm2States: "&phraseId, grade, nextReviewDate, lastReviewDate",
+    reviewLogs: "++id, phraseId, date, correct",
+    synonymGroups: "++id",
+  });
+
+  // Clear existing phrases
+  await db.phrases.clear();
+  await db.dailySessions.clear();
+  await db.cardProgress.clear();
+  await db.sm2States.clear();
+  await db.reviewLogs.clear();
+
+  const testPhrases = [
+    { phrase: "take part in", meaning: "参与，参加", example: "Everyone is encouraged to take part in the discussion.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "join in", usage: "加入别人正在做的事，更口语化", example: "Come and join in the game!" },
+      { phrase: "participate in", usage: "一样", example: "Students should participate in class activities." },
+      { phrase: "attend", usage: "出席，较正式，接会议/活动", example: "All staff must attend the meeting." }
+    ]},
+    { phrase: "give up", meaning: "放弃", example: "Don't give up, you're almost there!", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "quit", usage: "一样，quit更口语", example: "He quit smoking last year." },
+      { phrase: "abandon", usage: "彻底放弃，语气更强", example: "They abandoned the project." },
+      { phrase: "give in", usage: "让步，屈服", example: "He finally gave in to pressure." }
+    ]},
+    { phrase: "look after", meaning: "照顾", example: "She looks after her children.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "take care of", usage: "一样，可互换", example: "Take care of yourself!" },
+      { phrase: "care for", usage: "照顾，语气更温柔", example: "She cares for her elderly mother." }
+    ]},
+    { phrase: "break down", meaning: "出故障，崩溃", example: "My car broke down.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "break up", usage: "破碎，分手", example: "They broke up." },
+      { phrase: "fall apart", usage: "崩溃，解体", example: "The company fell apart." },
+      { phrase: "stop working", usage: "一样，口语化", example: "The machine stopped working." }
+    ]},
+    { phrase: "come up with", meaning: "想出", example: "He came up with a great idea.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "think of", usage: "一样，口语化", example: "Can you think of a solution?" },
+      { phrase: "propose", usage: "正式提出", example: "He proposed a new plan." }
+    ]},
+    { phrase: "put off", meaning: "推迟", example: "Don't put it off.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "postpone", usage: "一样，更正式", example: "The meeting was postponed." },
+      { phrase: "delay", usage: "延误，含负面含义", example: "The flight was delayed." }
+    ]},
+    { phrase: "carry out", meaning: "执行", example: "They carried out the plan.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "implement", usage: "一样，更正式", example: "The policy was implemented." },
+      { phrase: "execute", usage: "执行，强调精确", example: "The plan was executed well." }
+    ]},
+    { phrase: "turn down", meaning: "拒绝", example: "She turned down the offer.", category: "动词短语", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "reject", usage: "一样，语气更强", example: "He rejected the idea." },
+      { phrase: "decline", usage: "婉拒", example: "She declined the invitation." }
+    ]},
+    { phrase: "as a result", meaning: "因此", example: "He studied hard. As a result, he passed.", category: "核心词组", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "therefore", usage: "一样，更正式", example: "The weather was bad; therefore, it was canceled." },
+      { phrase: "so", usage: "所以，最口语化", example: "I was tired, so I went to bed." }
+    ]},
+    { phrase: "in addition", meaning: "此外", example: "In addition, we need more time.", category: "核心词组", tags: ["高频"], notes: "", synonym_details: [
+      { phrase: "furthermore", usage: "一样，更正式", example: "Furthermore, the cost is low." },
+      { phrase: "besides", usage: "除此之外，口语化", example: "Besides, it's too expensive." }
+    ]},
+  ];
+
+  for (const p of testPhrases) {
+    await db.phrases.add({ ...p, starred: false, createdAt: Date.now(), synonyms: [], common_mistake: "" });
+  }
+
+  status.textContent = '✅ 插入成功！';
+  status.style.color = '#34C759';
+  detail.innerHTML = '共 ' + testPhrases.length + ' 条带同义词的短语<br><br>' +
+    '<a href="/phrase-app1/" style="display:inline-block;padding:14px 28px;background:#4F8EF7;color:white;border-radius:14px;text-decoration:none;font-weight:bold;font-size:16px;">进入应用查看</a>' +
+    '<br><br>试试：<br>📖 短语库 → 点击同义链接<br>📚 学习 → 闯关看同义提示';
+}
+
+main().catch(e => {
+  status.textContent = '❌ 失败';
+  detail.textContent = e.message;
+});
+</script>
+</body>
+</html>
